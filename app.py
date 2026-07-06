@@ -88,9 +88,18 @@ if user_query:
 
     with st.chat_message("assistant"):
         streamlit_callback=StreamlitCallbackHandler(st.container())
-        response=agent.run(user_query,callbacks=[streamlit_callback])
-        st.session_state.messages.append({"role":"assistant","content":response})
-        st.write(response)
+        try:
+            response = agent.run(user_query, callbacks=[streamlit_callback])
+        except Exception as e:
+            st.error("An API/connection error occurred while contacting the LLM service.")
+            st.exception(e)
+            # record in session so the UI doesn't crash; append a helpful assistant message
+            err_msg = "I couldn't reach the LLM service. Check your network and GROQ_API_KEY."
+            st.session_state.messages.append({"role": "assistant", "content": err_msg})
+            st.write(err_msg)
+        else:
+            st.session_state.messages.append({"role":"assistant","content":response})
+            st.write(response)
 
         
 
